@@ -30,6 +30,12 @@
       socket.on('msg', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
+      
+      $(document).keypress(function(event){
+       //if (event.which == 'w' || event.which == 'a' || event.which == 's' || event.which == 'd')
+         socket.emit('key', event.which);
+     })
+
     </script>
   </body>
 </html>
