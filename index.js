@@ -26,20 +26,28 @@
 
 
 
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+var express = require('express'); // For pages handling
+var app = express(); // For pages handling
+var http = require('http').Server(app); // For http handling
+var io = require('socket.io')(http); // For socket handling
 
-eval(require('fs').readFileSync('./class/User.js')+'');
+var uuid = require('node-uuid'); // For id generagtion
 
-var users = {};
+app.use(express.static('public')); // Give access to every public file
 
-app.get('/', function(req, res){
-	res.sendFile(__dirname + '/index.html');
-});
+eval(require('fs').readFileSync('./public/class/User.js')+''); // Import class
+
+var users = {}; // List of users
+var ips = {};
+var connections = {};
 
 io.on('connection', function(socket){
-	users[socket.id] = User(socket);
+	var uid;
+	while (users[uid])
+		uid = uuid.v4();
+	connections[socket.id] = uid;
+
+	users[uid] = new User(uid);
 	console.log('User '+socket.id+' logged in');
 
 	socket.on('msg', function(msg){
@@ -59,7 +67,7 @@ io.on('connection', function(socket){
 	});
 
 	socket.on('disconnect', function() {
-		delete users[socket.id];
+		delete connections[uid]
 		console.log('User '+socket.id+' logged out');
 	});
 
@@ -67,9 +75,12 @@ io.on('connection', function(socket){
 		console.log(users);
 	});
 
-	socket.on('connect ip', function(User){
-		console.log('Unregistered');
-		console.log('Unregistered user with ip: '+User.ip);
+	socket.on('getip', function(ip){
+		var user = users[connections[socket.id]];
+		user.ip = ip;
+		user.sid = uuid.v4();
+		socket.emit('setsid', user.sid)
+		console.log(user);
 	});
 });
 

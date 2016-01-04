@@ -20,7 +20,10 @@
       }
     </script>
 
+    <button onclick="window.location.href='/index.html'">home</button>
     <button onclick="askUsers()">Users</button>
+    <button onclick="window.location.href='/room.html'">Create room</button>
+    <button onclick="window.location.href='/rooms.html'">List rooms</button>
 
     <!-- BEGIN CHAT -->
     <ul id="messages"></ul>
@@ -41,28 +44,30 @@
 
     <!-- BEGIN HOMEMADE SCRIPTS -->
     <script>
-    // socket.emit('msg', 'hello');
-    //   var socket = io();
-    //   $('form').submit(function(){
-    //     socket.emit('msg', $('#m').val());
-    //     $('#m').val('');
-    //     return false;
-    //   });
+      var socket = io();
+      socket.emit('getip', myip);
 
-    //   socket.on('msg', function(msg){
-    //     $('#messages').append($('<li>').text(msg));
-    //   });
+      $('form').submit(function(){
+        socket.emit('msg', $('#m').val());
+        $('#m').val('');
+        return false;
+      });
+
+      socket.on('msg', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
       
-    //   $(document).keypress(function(event){
-    //     socket.emit('key', event.which);
-    //  })
+      $(document).keypress(function(event){
+        socket.emit('key', event.which);
+     })
 
-    //   socket.on('move', function(msg){
-    //     $('#messages').append($('<li>').text(msg));
-    //   });
+      socket.on('move', function(msg){
+        $('#messages').append($('<li>').text(msg));
+      });
 
-    //   socket.emit('connect ip', User(socket, myip));
-    //   socket.emit('send ip', myip);
+      socket.on('setsid', function(sid){
+        $('#messages').append($('<li>').text('My sid is '+sid));
+      });
 
     </script>
     <!-- END HOMEMADE SCRIPTS -->
