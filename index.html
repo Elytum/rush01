@@ -22,13 +22,22 @@
 
     <button onclick="askUsers()">Users</button>
 
+    <!-- BEGIN CHAT -->
     <ul id="messages"></ul>
+    <!-- END CHAT -->
+
+    <!-- BEGIN CHAT FORM  -->
     <form action="">
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
+    <!-- END CHAT FORM -->
+
+    <!-- BEGIN SCRIPTS INCLUSION -->
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <!-- STOP SCRIPTS INCLUSION -->
 
+    <!-- BEGIN HOMEMADE SCRIPTS -->
     <script>
       var socket = io();
       $('form').submit(function(){
@@ -50,6 +59,7 @@
       });
 
     </script>
+    <!-- END HOMEMADE SCRIPTS -->
 
   </body>
 </html>
