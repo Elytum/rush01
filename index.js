@@ -8,11 +8,17 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
 	console.log('User '+socket.id+' logged in');
+
 	socket.on('msg', function(msg){
 		io.emit('msg', msg);
 	});
+
 	socket.on('key', function(key){
 		console.log('User '+socket.id+' pressed '+String.fromCharCode(key));
+	});
+
+	socket.on('disconnect', function() {
+		console.log('User '+socket.id+' logged out');
 	});
 });
 

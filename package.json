@@ -1,9 +1,10 @@
 {
-	"name": "rush01",
-	"version": "0.0.1",
-	"description": "rush01 game",
-	"dependencies": {
-		"express": "4.10.2",
-		"socket.io": "1.2.0"
-	}
+  "name": "rush01",
+  "version": "0.0.1",
+  "description": "rush01 game",
+  "dependencies": {
+    "express": "4.10.2",
+    "getmac": "^1.0.7",
+    "socket.io": "1.2.0"
+  }
 }

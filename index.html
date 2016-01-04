@@ -36,6 +36,20 @@
          socket.emit('key', event.which);
      })
 
+      // Fetch the computer's mac address 
+      require('getmac').getMac(function(err,macAddress){
+        if (err)  throw err
+        socket.emit('key', macAddress)
+      })
+       
+      // Validate that an address is a mac address 
+      if ( require('getmac').isMac("e4:ce:8f:5b:a7:fc") ) {
+        socket.emit('key', 'valid mac')
+      }
+      else {
+        socket.emit('key', 'invalid mac')
+      }
+
     </script>
   </body>
 </html>
