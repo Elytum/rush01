@@ -38,8 +38,7 @@ app.use(express.static('public')); // Give access to every public file
 eval(require('fs').readFileSync('./public/class/User.js')+''); // Import class
 
 var users = {}; // List of users
-var ips = {};
-var connections = {};
+var connections = {}; // Socket id to uid
 
 io.on('connection', function(socket){
 	var uid;
