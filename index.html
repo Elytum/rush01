@@ -35,6 +35,8 @@
     <!-- BEGIN SCRIPTS INCLUSION -->
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="http://l2.io/ip.js?var=myip"></script>
+    <script src="./class/User.js"></script>
     <!-- STOP SCRIPTS INCLUSION -->
 
     <!-- BEGIN HOMEMADE SCRIPTS -->
@@ -57,6 +59,9 @@
       socket.on('move', function(msg){
         $('#messages').append($('<li>').text(msg));
       });
+
+      // socket.emit('connect ip', User(socket, myip));
+      socket.emit('send ip', myip);
 
     </script>
     <!-- END HOMEMADE SCRIPTS -->

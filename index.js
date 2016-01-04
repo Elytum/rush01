@@ -30,9 +30,7 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
-function User(socket) {
-	this.socket = socket;
-}
+eval(require('fs').readFileSync('./class/User.js')+'');
 
 var users = {};
 
@@ -45,10 +43,6 @@ io.on('connection', function(socket){
 	console.log('User '+socket.id+' logged in');
 
 	socket.on('msg', function(msg){
-		io.emit('msg', msg);
-	});
-
-	socket.on('room msg', function(msg){
 		io.emit('msg', msg);
 	});
 
@@ -71,6 +65,11 @@ io.on('connection', function(socket){
 
 	socket.on('list', function(msg){
 		console.log(users);
+	});
+
+	socket.on('connect ip', function(User){
+		console.log('Unregistered');
+		console.log('Unregistered user with ip: '+User.ip);
 	});
 });
 
