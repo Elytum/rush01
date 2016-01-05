@@ -25,7 +25,6 @@
 
 
 
-
 var express = require('express'); // For pages handling
 var app = express(); // For pages handling
 var http = require('http').Server(app); // For http handling
@@ -39,16 +38,11 @@ eval(require('fs').readFileSync('./public/class/User.js')+''); // Import class
 
 var users = {}; // List of users
 var connections = {}; // Socket id to uid
+var ips = {}; // Socket id to uid
 
 io.on('connection', function(socket){
-	var uid;
-	while (users[uid])
-		uid = uuid.v4();
-	connections[socket.id] = uid;
-
-	users[uid] = new User(uid);
 	console.log('User '+socket.id+' logged in');
-
+	
 	socket.on('msg', function(msg){
 		io.emit('msg', msg);
 	});
@@ -66,7 +60,8 @@ io.on('connection', function(socket){
 	});
 
 	socket.on('disconnect', function() {
-		delete connections[uid]
+		if (connections[socket.id])
+			delete connections[socket.id];
 		console.log('User '+socket.id+' logged out');
 	});
 
@@ -74,13 +69,46 @@ io.on('connection', function(socket){
 		console.log(users);
 	});
 
-	socket.on('getip', function(ip){
-		var user = users[connections[socket.id]];
-		user.ip = ip;
-		user.sid = uuid.v4();
-		socket.emit('setsid', user.sid)
-		console.log(user);
+
+	socket.on('authentication', function(session){
+		console.log(session.uid+' trying to authentificate himself with '+session.sid);
+		// var tmp_user = users[session.uid];
+		// if (tmp_user)
+		// {
+		// 	if (tmp_user.sid == session.sid)
+		// 	{
+		// 		console.log('Authentification successfull for "'+tmp_user.getLogin()+'"');
+		// 		tmp_user.sid = uuid.v4();
+		// 		io.emit('update sid', tmp_user.sid);
+		// 	}
+		// 	else
+		// 	{
+		// 		console.log('Unsafe connection detected on user '+session.uid);
+		// 		tmp_user.safe = false;
+		// 	}
+		// }
+		// else
+		// {
+  //   		ip = socket.request.connection.remoteAddress;
+  //   		if (ips[ip] != undefined)
+  //   			ips[ip] = 1;
+  //   		// else if (ips[ip] == 5)
+  //   		else
+  //   			++ips[ip];
+		// 	var uid = uuid.v4();
+		// 	while (users[uid])
+		// 		uid = uuid.v4();
+		// 	var user = new User(uid);
+		// 	users[uid] = user;
+		// 	user.sid = uuid.v4();
+		// 	user.socket = socket.id;
+
+		// 	connections[socket.id] = uid;
+		// 	console.log('It failed');
+		// }
 	});
+
+	io.emit('request authentification', null);
 });
 
 http.listen(3000, function(){

@@ -13,5 +13,5 @@ cd emsdk-portable
 # Set the current Emscripten path on Linux/Mac OS X
 source ./emsdk_env.sh
 
-# To compile into asm.js file, just run "./emcc -O1 -s ASM_JS=1 ./file.cpp"
+# To compile into asm.js file, just run "emcc -O1 -s ASM_JS=1 ./file.cpp"
 # To run it, just run "node a.out.js"

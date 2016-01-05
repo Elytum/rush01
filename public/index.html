@@ -39,35 +39,46 @@
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script type="text/javascript" src="http://l2.io/ip.js?var=myip"></script>
-    <script src='./class/User.js'> </script>
+    <script src='./class/Authentificator.js'> </script>
     <!-- STOP SCRIPTS INCLUSION -->
 
     <!-- BEGIN HOMEMADE SCRIPTS -->
     <script>
-      var socket = io();
-      socket.emit('getip', myip);
-
       $('form').submit(function(){
         socket.emit('msg', $('#m').val());
         $('#m').val('');
         return false;
       });
 
-      socket.on('msg', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
-      
       $(document).keypress(function(event){
         socket.emit('key', event.which);
      })
 
-      socket.on('move', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
+      var socket = io();
 
-      socket.on('setsid', function(sid){
-        $('#messages').append($('<li>').text('My sid is '+sid));
-      });
+      // START REQUESTS DEFINITION
+          socket.on('msg', function(msg){
+            $('#messages').append($('<li>').text(msg));
+          });
+          
+
+          socket.on('move', function(msg){
+            $('#messages').append($('<li>').text(msg));
+          });
+
+          socket.on('request authentification', function(msg){
+            // var session = new Authentificator(1, 2);
+            // socket.emit('authentication', session);
+          });
+
+          socket.on('logged in', function(user){
+            // console.log('uid: "'+user.uid+'", sid: "'+user.sid+'"');
+          });
+
+          socket.on('update sid', function(sid){
+            // console.log('My new sid is: '+sid);
+          });
+      // STOP REQUESTS DEFINITION
 
     </script>
     <!-- END HOMEMADE SCRIPTS -->
