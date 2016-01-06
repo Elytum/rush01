@@ -29,12 +29,18 @@ var express = require('express'); // For pages handling
 var app = express(); // For pages handling
 var http = require('http').Server(app); // For http handling
 var io = require('socket.io')(http); // For socket handling
+var cassandra = require('cassandra-driver'); // For cassandra handling
 
 var uuid = require('node-uuid'); // For id generagtion
 
 app.use(express.static('public')); // Give access to every public file
 
-eval(require('fs').readFileSync('./public/class/User.js')+''); // Import class
+eval(require('fs').readFileSync('./public/class/User.js')+''); // Import user class
+eval(require('fs').readFileSync('./private/class/Server.js')+''); // Import server class
+
+
+var client = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: "game"});
+var server = new Server(client);
 
 var users = {}; // List of users
 var connections = {}; // Socket id to uid
@@ -107,7 +113,9 @@ io.on('connection', function(socket){
 				user.socket = socket.id;
 
 				connections[socket.id] = uid;
-				console.log('It failed');
+				console.log('\t\tNew user: '+uid);
+				console.log(server);
+				console.log('\t\t\t\tNew user: '+server.addUser(socket.request.connection.remoteAddress));
 			}
 		}
 	});
