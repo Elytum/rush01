@@ -72,40 +72,44 @@ io.on('connection', function(socket){
 
 	socket.on('authentication', function(session){
 		console.log(session.uid+' trying to authentificate himself with '+session.sid);
-		// var tmp_user = users[session.uid];
-		// if (tmp_user)
-		// {
-		// 	if (tmp_user.sid == session.sid)
-		// 	{
-		// 		console.log('Authentification successfull for "'+tmp_user.getLogin()+'"');
-		// 		tmp_user.sid = uuid.v4();
-		// 		io.emit('update sid', tmp_user.sid);
-		// 	}
-		// 	else
-		// 	{
-		// 		console.log('Unsafe connection detected on user '+session.uid);
-		// 		tmp_user.safe = false;
-		// 	}
-		// }
-		// else
-		// {
-  //   		ip = socket.request.connection.remoteAddress;
-  //   		if (ips[ip] != undefined)
-  //   			ips[ip] = 1;
-  //   		// else if (ips[ip] == 5)
-  //   		else
-  //   			++ips[ip];
-		// 	var uid = uuid.v4();
-		// 	while (users[uid])
-		// 		uid = uuid.v4();
-		// 	var user = new User(uid);
-		// 	users[uid] = user;
-		// 	user.sid = uuid.v4();
-		// 	user.socket = socket.id;
+		var tmp_user = users[session.uid];
+		if (tmp_user)
+		{
+			if (tmp_user.sid == session.sid)
+			{
+				console.log('Authentification successfull for "'+tmp_user.getLogin()+'"');
+				tmp_user.sid = uuid.v4();
+				io.emit('update sid', tmp_user.sid);
+			}
+			else
+			{
+				console.log('Unsafe connection detected on user '+session.uid);
+				tmp_user.safe = false;
+			}
+		}
+		else
+		{
+			ip = socket.request.connection.remoteAddress;
+			if (ips[ip] == 5)
+				console.log('Too many accounts for ip: '+ip);
+			else
+			{
+				if (ips[ip] == undefined)
+					ips[ip] = 1;
+				else
+					++ips[ip];
+				var uid = uuid.v4();
+				while (users[uid])
+					uid = uuid.v4();
+				var user = new User(uid);
+				users[uid] = user;
+				user.sid = uuid.v4();
+				user.socket = socket.id;
 
-		// 	connections[socket.id] = uid;
-		// 	console.log('It failed');
-		// }
+				connections[socket.id] = uid;
+				console.log('It failed');
+			}
+		}
 	});
 
 	io.emit('request authentification', null);

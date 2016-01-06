@@ -67,16 +67,16 @@
           });
 
           socket.on('request authentification', function(msg){
-            // var session = new Authentificator(1, 2);
-            // socket.emit('authentication', session);
+            var session = new Authentificator(1, 2);
+            socket.emit('authentication', session);
           });
 
           socket.on('logged in', function(user){
-            // console.log('uid: "'+user.uid+'", sid: "'+user.sid+'"');
+            console.log('uid: "'+user.uid+'", sid: "'+user.sid+'"');
           });
 
           socket.on('update sid', function(sid){
-            // console.log('My new sid is: '+sid);
+            console.log('My new sid is: '+sid);
           });
       // STOP REQUESTS DEFINITION
 
