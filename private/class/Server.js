@@ -101,6 +101,7 @@ Server.prototype.getUserInfo = function (uid, data, callback) {
 	client.execute('SELECT '+data+' FROM users WHERE uid = \''+uid+'\';', function (err, result) {
 		if (err)
 		{
+			console.log(err);
 			callback('CQL error'); return ;
 		}
 		else
@@ -111,10 +112,25 @@ Server.prototype.getUserInfo = function (uid, data, callback) {
 	});
 }
 
+Server.prototype.removeOldest = function (table) {
+	console.log(table);
+	// client.execute('SELECT '+data+' FROM users WHERE uid = \''+uid+'\';', function (err, result) {
+	// 	if (err)
+	// 	{
+	// 		console.log(err);
+	// 		callback('CQL error'); return ;
+	// 	}
+	// 	else
+	// 	{
+	// 		console.log(result);
+	// 		callback(null, result);
+	// 	}
+	// });
+}
+
 Server.prototype.refactorised = function (ip) {
 	console.log('Call to refactorised');
 	var	uid = 0;
-	var lol = 1;
 	async.series(
 		[
 		// Verification du nombre de comptes
@@ -126,15 +142,46 @@ Server.prototype.refactorised = function (ip) {
 
 		],
 		// Erreur
-		function(err, result, lol) {
+		function(err, result) {
 			if (err)
 				console.log('FAIL: ' + err);
 			else
 			{
 				console.log('subscribed: '+result[0]['subscribed']+', unsubscribed: '+result[0]['unsubscribed']+' and uid: '+result[1]);
-				console.log(result[2].getUserInfo());
-				// this.getUserInfo('truc', uid);
+				result[2].getUserInfo('uid', 'data', null);
+result[0]['unsubscribed'] = ['one', 'two', 'three', 'four', 'five', 'six'];
+				if (result[0]['subscribed'] + result[0]['unsubscribed'].length > 5)
+					this.removeOldest(result[0]['unsubscribed']);
+				//add user
 			}
+
+
+	// 	async.series(
+	// 	[
+	// 	// Verification du nombre de comptes
+	// 	async.apply(this.ipInfo, server.client, server.client),
+	// 	// Generation de l'uid
+	// 	async.apply(this.genUid, server.client),
+	// 		// Bad looking tricks to change
+	// 	async.apply(function(variable, callback) { callback(null, variable); return; }, this),
+
+	// 	],
+	// 	// Erreur
+	// 	function(err, result) {
+	// 		if (err)
+	// 			console.log('FAIL: ' + err);
+	// 		else
+	// 		{
+	// 			console.log('subscribed: '+result[0]['subscribed']+', unsubscribed: '+result[0]['unsubscribed']+' and uid: '+result[1]);
+	// 			result[2].getUserInfo('uid', 'data', null);
+	// 			if (result[0]['unsubscribed'])
+	// 				console.log(result[0]['unsubscribed']);
+	// 			// this.getUserInfo('truc', uid);
+	// 		}
+	// 	}
+	// );
+
+
 		}
 	);
 }
