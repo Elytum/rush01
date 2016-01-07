@@ -17,26 +17,25 @@ function launch_query(query) {
 launch_query('USE game;');
 launch_query('CREATE TABLE users (  
 uid varchar PRIMARY KEY,          
-suscribed boolean PRIMARY KEY,
 login varchar,                    
 password varchar,                 
-ip bigint,                        
+ip varchar,                        
 sid bigint,                       
 safe boolean,                     
 socket bigint,                    
 creation_date bigint              
 );');
 
-										// launch_query('CREATE TABLE ips (      
-										// 	ip bigint PRIMARY KEY,           
-										// 	uids set<varchar>                 
-										// );');
+launch_query('CREATE TABLE ips (      
+ip varchar PRIMARY KEY,           
+uids_unsubscribed set<varchar>,           
+number_subscribed int      
+);');
 
 										// launch_query('SELECT login FROM users;');
 										// var uid = '42';
 										// var ip = 21;
-										// launch_query('UPDATE ips
-										//        SET ips = ips + {\''+uid+'\'} WHERE ip = '+ip+';');
+										// launch_query('UPDATE ips SET ips = ips + {\''+uid+'\'} WHERE ip = '+ip+';');
 
 										// launch_query('INSERT INTO ips (ip, uids)
 										//        VALUES(21, {\'42\'});');

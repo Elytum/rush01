@@ -26,6 +26,7 @@
 
 
 var express = require('express'); // For pages handling
+var async = require('async'); // For pages async
 var app = express(); // For pages handling
 var http = require('http').Server(app); // For http handling
 var io = require('socket.io')(http); // For socket handling
@@ -114,7 +115,7 @@ io.on('connection', function(socket){
 
 				connections[socket.id] = uid;
 				console.log('\t\tNew user: '+uid);
-				console.log(server);
+				// console.log(server);
 				console.log('\t\t\t\tNew user: '+server.addUser(socket.request.connection.remoteAddress));
 			}
 		}
