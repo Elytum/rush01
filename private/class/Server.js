@@ -7,34 +7,6 @@ function Server(client) {
 	this.client = client;
 }
 
-Server.prototype.usersByIp = function (ip) {
-	client.execute('INSERT INTO users(uid, creation_date, ip, login, password, safe, sid, socket) values (\''+uid+'\', '+Date.now()+', '+ip+', null, null, 1, null, null);', function (err, result) {
-		if (err)
-			uid = false;
-	});
-	return uid;
-}
-
-Server.prototype.deleteUser = function (ip) {
-	client.execute('SELECT count(*) FROM users WHERE uid = \''+uid+'\';', function (err, result) {
-			if (err || result.rows[0]['count'] != 0)
-				 uid = false;
-	});
-	return uid;
-}
-
-// getNewUid = function ()
-// {
-// 	console.log('Getting new uid');
-// 	console.log(uid);
-// 	uid = 42;
-// }
-
-// printUid = function ()
-// {
-// 	console.log('Uid value: '+uid);
-// }
-
 Server.prototype.ipInfo = function (client, ip, callback) {
 	client.execute('SELECT number_subscribed, uids_unsubscribed FROM ips WHERE ip = \''+ip+'\';', function (err, result) {
 		if (err)
@@ -53,10 +25,9 @@ Server.prototype.ipInfo = function (client, ip, callback) {
 			});
 			callback(null, {'subscribed': 0, 'unsubscribed': null});
 		}
-		else if (result['rows'][0]['number_subscribed'] == 5)
+		else if (result['rows'][0]['number_subscribed'] >= 5)
 		{
-			callback('Too many accounts');
-			return ;
+			callback('Too many accounts'); return ;
 		}
 		else
 		{
@@ -74,7 +45,6 @@ Server.prototype.genUid = function (client, callback) {
 	uid = uuid.v4();
 	function loop(jmp) {
 		client.execute('SELECT count(*) FROM users WHERE uid = \''+uid+'\';', function (err, result) {
-			console.log('uid: '+uid);
 			if (err)
 			{
 				callback('CQL error'); return ;
@@ -102,42 +72,90 @@ Server.prototype.getUserInfo = function (uid, data, callback) {
 		if (err)
 		{
 			console.log(err);
-			callback('CQL error'); return ;
+			callback(null, undefined); return ;
 		}
 		else
 		{
-			console.log(result);
-			callback(null, result);
+			var str = result['rows'][0][data];
+			if (str.constructor.name == 'Long' || str.constructor.name == 'Int')
+				callback(null, parseInt(str));
+			else
+				callback(null, str);
 		}
 	});
 }
 
-Server.prototype.removeOldest = function (table) {
-	console.log(table);
-	// client.execute('SELECT '+data+' FROM users WHERE uid = \''+uid+'\';', function (err, result) {
-	// 	if (err)
-	// 	{
-	// 		console.log(err);
-	// 		callback('CQL error'); return ;
-	// 	}
-	// 	else
-	// 	{
-	// 		console.log(result);
-	// 		callback(null, result);
-	// 	}
-	// });
+Server.prototype.rmUser = function (uid, callback) {
+	client.execute('select ip, password from users where uid = \''+uid+'\';', function (err, result) {
+		if (result && result['rows'][0])
+		{
+			console.log(result);
+			console.log(result['rows']);
+			console.log(result['rows'][0]);
+			ip = result['rows'][0]['ip'];
+			subscribed = (result['rows'][0]['password'] != null) ? true : false;
+				client.execute('DELETE FROM users WHERE uid = \''+uid+'\';', function (err, result) {
+				if (err) { callback(err); return ; }
+				else
+				{
+					if (subscribed)
+						client.execute('UPDATE ips SET number_subscribed = number_subscribed - 1 WHERE ip = \''+ip+'\';', function (err, result)
+							{ if (err) callback(err); else callback(null, true); return ; });
+					else
+						client.execute('UPDATE ips SET uids_unsubscribed = uids_unsubscribed - {\''+uid+'\'} WHERE ip = \''+ip+'\';', function (err, result)
+							{ if (err) callback(err); else callback(null, true); return ; });
+				}
+			});
+		}
+	});
 }
 
-Server.prototype.refactorised = function (ip) {
-	console.log('Call to refactorised');
-	var	uid = 0;
+Server.prototype.rmOldestUser = function (table, callback) {
+	cpy = this;
+	if (table == null || table.length == 0)
+		return ;
+
+	var request = 'SELECT creation_date FROM users WHERE uid in (';
+	var first = true;
+
+	for (var key in table) {
+		if (first == true)
+			first = false;
+		else
+			request += ',';
+		request += '\''+table[key]+'\'';
+	}
+	request += ');';
+	client.execute(request, function (err, result) {
+		if (err)
+		{
+			console.log(err);
+		}
+		else
+		{
+			var oldest_key = 0;
+			var key = 1;
+
+			while (result['rows'][key])
+			{
+				if (result['rows'][key]['creation_date'] < result['rows'][oldest_key]['creation_date'])
+					oldest_key = key;
+				++key;
+			}
+			cpy.rmUser(table[oldest_key], callback);
+			return ;
+		}
+	});
+}
+
+Server.prototype.addUser = function (ip, callback) {
 	async.series(
 		[
 		// Verification du nombre de comptes
-		async.apply(this.ipInfo, server.client, server.client),
+		async.apply(this.ipInfo, server.client, ip),
 		// Generation de l'uid
 		async.apply(this.genUid, server.client),
-			// Bad looking tricks to change
+			// Bad looking trick to change
 		async.apply(function(variable, callback) { callback(null, variable); return; }, this),
 
 		],
@@ -147,156 +165,27 @@ Server.prototype.refactorised = function (ip) {
 				console.log('FAIL: ' + err);
 			else
 			{
-				console.log('subscribed: '+result[0]['subscribed']+', unsubscribed: '+result[0]['unsubscribed']+' and uid: '+result[1]);
-				result[2].getUserInfo('uid', 'data', null);
-result[0]['unsubscribed'] = ['one', 'two', 'three', 'four', 'five', 'six'];
-				if (result[0]['subscribed'] + result[0]['unsubscribed'].length > 5)
-					this.removeOldest(result[0]['unsubscribed']);
-				//add user
+				subscribed = result[0]['subscribed'];
+				unsubscribed = result[0]['unsubscribed'];
+				uid = result[1];
+				server = result[2];
+				if (unsubscribed && subscribed + unsubscribed.length >= 5)
+					 server.rmOldestUser(unsubscribed);
+				// Add user
+				client.execute('INSERT INTO users(uid, creation_date, ip, login, password, safe, sid, socket) values (\''+uid+'\', '+Date.now()+', \''+ip+'\', null, null, true, null, null);', function (err, res) {
+					if (err)
+					{
+						console.log(err);
+						callback('Coulnd\'t insert user');
+					}
+					else
+					{
+						client.execute('UPDATE ips SET uids_unsubscribed = uids_unsubscribed + {\''+uid+'\'} WHERE ip = \''+ip+'\';', function (err, res)
+							{ if (err) console.log(err); });
+							callback(null, uid);
+					}
+				});
 			}
-
-
-	// 	async.series(
-	// 	[
-	// 	// Verification du nombre de comptes
-	// 	async.apply(this.ipInfo, server.client, server.client),
-	// 	// Generation de l'uid
-	// 	async.apply(this.genUid, server.client),
-	// 		// Bad looking tricks to change
-	// 	async.apply(function(variable, callback) { callback(null, variable); return; }, this),
-
-	// 	],
-	// 	// Erreur
-	// 	function(err, result) {
-	// 		if (err)
-	// 			console.log('FAIL: ' + err);
-	// 		else
-	// 		{
-	// 			console.log('subscribed: '+result[0]['subscribed']+', unsubscribed: '+result[0]['unsubscribed']+' and uid: '+result[1]);
-	// 			result[2].getUserInfo('uid', 'data', null);
-	// 			if (result[0]['unsubscribed'])
-	// 				console.log(result[0]['unsubscribed']);
-	// 			// this.getUserInfo('truc', uid);
-	// 		}
-	// 	}
-	// );
-
-
 		}
 	);
-}
-
-function test(msg) {
-	console.log(msg);
-}
-
-//Server.prototype.addUser = function (ip) {
-Server.prototype.addUser = function (ip) {
-	// getNewUid(5, test);
-	// console.log(this.getNewUid());
-	this.refactorised(ip);
-	
-	// var subscribed;
-	// var unsubscribed;
-	// var unsubscribed_number;
-	// var tries = 5;
-	// var uid = undefined;
-
-	// console.log("\t\tREAD THIS 1\t\t\t\t"+this);
-	// client.execute('SELECT number_subscribed, uids_unsubscribed FROM ips WHERE ip = \''+ip+'\';', function (err, result) {
-	// 	if (err)
-	// 	{
-	// 		console.log(err);
-	// 		throw ('CQL error');
-	// 	}
-	// 	else if (result['rowLength'] == 0)
-	// 	{
-	// 		result = client.execute('INSERT INTO ips(ip, number_subscribed, uids_unsubscribed) values (\''+ip+'\', 0, {});', function (err, result) {
-	// 			if (err)
-	// 			{
-	// 				console.log(err);
-	// 				throw ('CQL error');
-	// 			}
-	// 		});
-	// 		subscribed = 0;
-	// 		unsubscribed = null;
-	// 	}
-	// 	else
-	// 	{
-	// 		subscribed = result['rows'][0]['number_subscribed'];
-	// 		unsubscribed = result['rows'][0]['uids_unsubscribed'];
-	// 	}
-	// 	if (subscribed == 5)
-	// 		throw ('Too many accounts');
-
-	// 	console.log(subscribed+' : '+unsubscribed);
-
-	// 	(function loop () {
-	// 		tries--;
-	// 		if (tries == 0)
-	// 			return cb('not found');
-	// 		uid = uuid.v4();
-	// 		client.execute('SELECT count(*) FROM users WHERE uid = \''+uid+'\';', function (err, result) {
-	// 			if (err)
-	// 			{
-	// 				console.log(err);
-	// 				throw ('CQL error');
-	// 			}
-	// 			else if (/*ok*/)
-	// 				return cb(null, uid)
-	// 			else
-	// 				loop();
-	// 		});
-	// 	})();
-
-	// 	while (uid == undefined)
-	// 	{
-	// 		if (tries-- == 0)
-	// 			return (undefined);
-	// 		uid = uuid.v4();
-	// 		client.execute('SELECT count(*) FROM users WHERE uid = \''+uid+'\';', function (err, result) {
-	// 			uid = undefined;
-	// 			if (err)
-	// 			{
-	// 				console.log(err);
-	// 				throw ('CQL error');
-	// 			}
-	// 			else if (result.rows[0]['count'] != 0)
-	// 				 uid = undefined;
-	// 		});
-	// 	}
-	// 	console.log('Tries: '+tries);
-
-	// 	if (unsubscribed)
-	// 	{
-	// 		console.log(unsubscribed);
-	// 	}
-	// 	else
-	// 		console.log('No unsubscribed user');
-
-
-
-	// 	client.execute('INSERT INTO users(uid, creation_date, ip, login, password, safe, sid, socket) values (\''+uid+'\', '+Date.now()+', \''+ip+'\', null, null, true, null, null);', function (err, result) {
-	// 		if (err)
-	// 		{
-	// 			console.log(err);
-	// 			throw ('CQL error');
-	// 		}
-	// 		else
-	// 		{
-	// 			client.execute('UPDATE ips SET uids_unsubscribed = uids_unsubscribed + {\''+uid+'\'} WHERE ip = \''+ip+'\';', function (err, result) {
-	// 				if (err)
-	// 				{
-	// 					console.log(err);
-	// 					throw ('CQL error');
-	// 				}
-	// 				else
-	// 					console.log(result);
-	// 			});
-	// 		}
-	// 	});
-	// }),
-	// console.log(uid);
-	// console.log(uid);
-	// return uid;
 }

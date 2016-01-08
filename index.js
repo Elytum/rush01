@@ -43,10 +43,6 @@ eval(require('fs').readFileSync('./private/class/Server.js')+''); // Import serv
 var client = new cassandra.Client({ contactPoints: ['127.0.0.1'], keyspace: "game"});
 var server = new Server(client);
 
-var users = {}; // List of users
-var connections = {}; // Socket id to uid
-var ips = {}; // Socket id to uid
-
 io.on('connection', function(socket){
 	console.log('User '+socket.id+' logged in');
 	
@@ -67,58 +63,25 @@ io.on('connection', function(socket){
 	});
 
 	socket.on('disconnect', function() {
-		if (connections[socket.id])
-			delete connections[socket.id];
 		console.log('User '+socket.id+' logged out');
 	});
 
 	socket.on('list', function(msg){
-		console.log(users);
+		console.log('Call to undefined \'list\'');
 	});
 
-
 	socket.on('authentication', function(session){
-		console.log(session.uid+' trying to authentificate himself with '+session.sid);
-		var tmp_user = users[session.uid];
-		if (tmp_user)
-		{
-			if (tmp_user.sid == session.sid)
+		server.addUser(socket.request.connection.remoteAddress, function(err, result) {
+			if (err)
 			{
-				console.log('Authentification successfull for "'+tmp_user.getLogin()+'"');
-				tmp_user.sid = uuid.v4();
-				io.emit('update sid', tmp_user.sid);
+				console.log('Error: '+err);
 			}
 			else
 			{
-				console.log('Unsafe connection detected on user '+session.uid);
-				tmp_user.safe = false;
+				console.log(socket.id);
+				// io.clients[socket.id].send('msg', result);
 			}
-		}
-		else
-		{
-			ip = socket.request.connection.remoteAddress;
-			if (ips[ip] == 5)
-				console.log('Too many accounts for ip: '+ip);
-			else
-			{
-				if (ips[ip] == undefined)
-					ips[ip] = 1;
-				else
-					++ips[ip];
-				var uid = uuid.v4();
-				while (users[uid])
-					uid = uuid.v4();
-				var user = new User(uid);
-				users[uid] = user;
-				user.sid = uuid.v4();
-				user.socket = socket.id;
-
-				connections[socket.id] = uid;
-				console.log('\t\tNew user: '+uid);
-				// console.log(server);
-				console.log('\t\t\t\tNew user: '+server.addUser(socket.request.connection.remoteAddress));
-			}
-		}
+		});
 	});
 
 	io.emit('request authentification', null);
